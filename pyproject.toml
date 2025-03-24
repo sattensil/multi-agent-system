@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "multi-agent-system"
+version = "0.1.0"
+description = "A flexible multi-agent system using OpenAI Assistants API"
+authors = ["Your Name <your.email@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+openai = "^1.12.0"
+python-dotenv = "^1.0.1"
+newsapi-python = "^0.2.7"
+requests = "^2.31.0"
+pydantic = "^2.6.1"
+fastapi = "^0.109.2"
+uvicorn = "^0.27.1"
+beautifulsoup4 = "^4.12.2"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.4.0"
+black = "^23.7.0"
+isort = "^5.12.0"
+mypy = "^1.5.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

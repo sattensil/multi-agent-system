@@ -1,0 +1,35 @@
+# Environment variables
+.env
+
+# Generated posts
+my-agents/linkedin_posts/generated_posts/
+
+# Persona files (except examples)
+my-agents/linkedin_posts/personas/*
+!my-agents/linkedin_posts/personas/examples/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store
+Thumbs.db
+.env
