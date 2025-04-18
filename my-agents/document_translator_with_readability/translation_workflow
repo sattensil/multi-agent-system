@@ -1,0 +1,20 @@
+// Document Translation Workflow
+digraph translation_workflow {
+	rankdir=TB ratio=fill size="8,5"
+	node [color=lightblue fontname=Arial shape=box style=filled]
+	edge [fontname=Arial]
+	START [label=Start color=lightgreen shape=oval]
+	waiting_for_document [label="Waiting for Document"]
+	waiting_for_language [label="Waiting for Language"]
+	translating [label="Translating Document"]
+	testing_readability [label="Testing Readability"]
+	revising [label="Revising Translation"]
+	completed [label="Translation Completed" color=lightgreen]
+	START -> waiting_for_document
+	waiting_for_document -> waiting_for_language [label="Document provided"]
+	waiting_for_language -> translating [label="Language specified"]
+	translating -> testing_readability [label="Translation completed"]
+	testing_readability -> revising [label="Score < 7"]
+	testing_readability -> completed [label="Score ≥ 7"]
+	revising -> testing_readability [label="Revision completed"]
+}

@@ -1,0 +1,27 @@
+Document Translation Workflow
+===========================
+
+┌─────────┐     ┌────────────────────┐     ┌────────────────────┐     ┌─────────────────┐
+│  START  │────▶│ Waiting for        │────▶│ Waiting for        │────▶│ Translating     │
+└─────────┘     │ Document           │     │ Language           │     │ Document        │
+                └────────────────────┘     └────────────────────┘     └─────────────────┘
+                                                                              │
+                                                                              ▼
+┌─────────────────┐     ┌────────────────────┐     ┌─────────────────────────┐
+│  Translation    │◀────│ Revising           │◀────│ Testing                 │
+│  Completed      │     │ Translation        │     │ Readability             │
+└─────────────────┘     └────────────────────┘     └─────────────────────────┘
+      ▲                        │                             │
+      │                        │                             │
+      └────────────────────────┴─────────────────────────────┘
+            Score ≥ 7                       Score < 7
+
+State Transitions:
+-----------------
+1. START → Waiting for Document: Initial state
+2. Waiting for Document → Waiting for Language: Document provided
+3. Waiting for Language → Translating Document: Language specified
+4. Translating Document → Testing Readability: Translation completed
+5. Testing Readability → Translation Completed: Readability score ≥ 7
+6. Testing Readability → Revising Translation: Readability score < 7
+7. Revising Translation → Testing Readability: Revision completed

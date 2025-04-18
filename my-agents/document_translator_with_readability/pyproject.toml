@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "document-translator-with-readability"
+version = "0.1.0"
+description = "Document translator with readability testing"
+authors = ["User"]
+readme = "README.md"
+packages = [{include = "*"}]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<4.0"
+langchain = "^0.3.23"
+langchain-openai = "^0.3.14"
+python-dotenv = "^1.0.0"
+graphviz = "^0.20.3"
+matplotlib = "^3.10.1"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
