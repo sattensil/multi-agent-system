@@ -1,0 +1,40 @@
+# Output files
+*_English.txt
+*_Spanish.txt
+*_French.txt
+*_German.txt
+*_Italian.txt
+*_Portuguese.txt
+*_Chinese.txt
+*_Japanese.txt
+*_Korean.txt
+*_Russian.txt
+*_Arabic.txt
+*_Hindi.txt
+*_*.txt
+
+# Metadata files
+*_metadata.json
+
+# Log files
+*_20*.txt
+
+# Environment variables
+.env
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
