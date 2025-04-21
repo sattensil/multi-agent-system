@@ -1,8 +1,7 @@
 # Document Translator with Readability Testing
 
-A document translation system that translates English documents to any language and ensures high readability in the target language.
-
-## Features
+A document translation system that translates English documents to any language and ensures high readability in the target language. This project offers two implementations: a simple state-based translator and an advanced multi-agent architecture.
+### Common Features
 
 - **Document Loading**: Load text from files or direct input
 - **Language Selection**: Translate to any target language
@@ -10,7 +9,21 @@ A document translation system that translates English documents to any language 
 - **Readability Testing**: Analyzes the readability of translated content
 - **Automatic Revision**: Improves translations that don't meet readability standards
 
-## Workflow
+### Simple Translator (`simple_translator.py`)
+
+- State machine-based workflow
+- Lightweight implementation
+- Sequential processing
+
+### Multi-Agent Translator (`agent_translator.py`)
+
+- **Supervisor-Agent Architecture**: Uses a supervisor to coordinate specialized agents
+- **Specialized Agents**: Separate agents for translation, readability testing, and revision
+- **Advanced Decision Making**: Dynamic workflow based on agent recommendations
+- **Detailed Feedback**: More comprehensive readability assessment
+- **LangGraph Integration**: Built on the LangGraph framework for agent orchestration
+
+### Simple Translator Workflow
 
 1. **Load Document**: The system accepts an English document (text file or direct input)
 2. **Select Target Language**: Specify which language to translate into
@@ -18,8 +31,9 @@ A document translation system that translates English documents to any language 
 4. **Readability Testing**: An agent analyzes the translation's readability on a scale of 1-10
 5. **Revision (if needed)**: If readability score is below 7, the translation is revised
 6. **Final Output**: Delivers a high-quality, readable translation
+### Workflow Diagrams
 
-### Workflow Diagram
+#### Simple Translator Workflow
 
 ```
 ┌─────────┐     ┌────────────────────┐     ┌────────────────────┐     ┌─────────────────┐
@@ -37,6 +51,61 @@ A document translation system that translates English documents to any language 
       └────────────────────────┴─────────────────────────────┘
             Score ≥ 7                       Score < 7
 ```
+
+#### Multi-Agent Translator Workflow
+
+```
+                                  ┌───────────────────┐
+                                  │                   │
+                                  │    Supervisor     │
+                                  │      Agent        │
+                                  │                   │
+                                  └─────────┬─────────┘
+                                            │
+                                            │ decides next agent
+                                            ▼
+          ┌─────────────────────┬───────────────────────┬─────────────────────┐
+          │                     │                       │                     │
+          ▼                     ▼                       ▼                     │
+┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐      │
+│                     │ │                     │ │                     │      │
+│   Translator Agent  │ │ Readability Tester  │ │    Reviser Agent    │      │
+│                     │ │                     │ │                     │      │
+└──────────┬──────────┘ └──────────┬──────────┘ └──────────┬──────────┘      │
+           │                       │                       │                 │
+           │                       │                       │                 │
+           └───────────────────────┼───────────────────────┘                 │
+                                   │                                         │
+                                   │ reports back                            │
+                                   ▼                                         │
+                          ┌─────────────────┐                                │
+                          │                 │                                │
+                          │   Supervisor    │◀───────────────────────────────┘
+                          │     Agent       │
+                          │                 │
+                          └────────┬────────┘
+                                   │
+                                   │ if complete
+                                   ▼
+                          ┌─────────────────┐
+                          │                 │
+                          │      END        │
+                          │                 │
+                          └─────────────────┘
+```
+### Multi-Agent Translator Workflow
+
+1. **Load Document & Language**: The system accepts an English document and target language
+2. **Supervisor Agent**: Coordinates the workflow and decides which agent to call next
+3. **Translator Agent**: Specialized agent for high-quality translation
+4. **Readability Tester Agent**: Dedicated agent for comprehensive readability assessment
+5. **Reviser Agent**: Specialized agent for improving translations with low readability
+6. **Dynamic Workflow**: The supervisor makes decisions based on each agent's output
+7. **Final Output**: Delivers a high-quality, readable translation with detailed feedback
+
+### Workflow Diagram
+
+
 
 ## Requirements
 
@@ -57,20 +126,42 @@ A document translation system that translates English documents to any language 
 
 ## Usage
 
-### Interactive Mode
+### Simple Translator
 
-Run the translator interactively with:
+#### Interactive Mode
+
+Run the simple translator interactively with:
 
 ```bash
 python simple_translator.py
 ```
 
-### Batch Mode
+#### Batch Mode
 
 Translate a file directly with:
 
 ```bash
 python simple_translator.py --input sample.txt --language Spanish --output translated.txt
+```
+
+### Multi-Agent Translator
+
+The multi-agent translator uses a supervisor-agent architecture for more sophisticated translation workflow.
+
+#### Interactive Mode
+
+Run the multi-agent translator interactively with:
+
+```bash
+python agent_translator.py
+```
+
+#### Batch Mode
+
+Translate a file directly with:
+
+```bash
+python agent_translator.py --input sample.txt --language Spanish --output translated.txt
 ```
 
 Follow the interactive prompts to:

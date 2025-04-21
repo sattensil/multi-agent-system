@@ -76,7 +76,7 @@ class DocumentTranslator:
         if not self.document_content or not self.target_language:
             return "Missing document content or target language. Please provide both."
         
-        llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.2)
+        llm = ChatOpenAI(model="gpt-4.1", temperature=0.2)
         
         system_prompt = f"""
         You are a professional translator. Translate the following document from English to {self.target_language}.
@@ -100,7 +100,7 @@ class DocumentTranslator:
         if not self.translated_content:
             return "No translated content to test for readability."
         
-        llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+        llm = ChatOpenAI(model="gpt-4.1", temperature=0)
         
         system_prompt = f"""
         You are a readability expert for {self.target_language}. 
