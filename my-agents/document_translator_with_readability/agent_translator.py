@@ -15,6 +15,8 @@ The workflow is coordinated by a supervisor agent that decides which agent to ca
 import os
 import sys
 import json
+import datetime
+import io
 from typing import Dict, List, Optional, Union, Any, Literal, TypedDict
 from enum import Enum
 from typing_extensions import Annotated
@@ -67,6 +69,7 @@ Available agents:
 
 Rules:
 - Start with the translator if we have both document content and target language
+- If the document is already in the target language, skip translation and go directly to readability testing
 - After translation, always test readability
 - If readability score is below 7/10, call the reviser
 - After revision, test readability again
@@ -78,6 +81,7 @@ TRANSLATOR_PROMPT = """
 You are a professional translator. Your job is to translate documents from English to the specified target language.
 Maintain the original formatting, tone, and intent of the document.
 Ensure the translation is natural and fluent in the target language.
+You may receive a document that is already in the target language, in which case you should return the original content.
 """
 
 READABILITY_TESTER_PROMPT = """
@@ -122,6 +126,22 @@ def supervisor_node(state: State) -> Command[Literal["translator", "readability_
         SystemMessage(content=SUPERVISOR_PROMPT),
     ] + state["messages"]
     
+    # Check if we just completed a successful revision
+    last_message = state["messages"][-1] if state["messages"] else None
+    readability_score = state.get("readability_score")
+    previous_score = state.get("previous_readability_score")
+    
+    # If we have a good readability score after revision, go straight to FINISH
+    if (last_message and "revised translation" in last_message.content.lower() and 
+            readability_score is not None and readability_score >= 7.0 and
+            previous_score is not None and readability_score > previous_score):
+        print("\n" + "=" * 80)
+        print("🎉 WORKFLOW COMPLETE: Revision successful with good readability score")
+        print(f"📊 Final readability score: {readability_score}/10 (improved from {previous_score})")
+        print("=" * 80)
+        state["messages"].append(AIMessage(content="Translation process completed successfully after revision."))
+        return Command(goto=END, update={"next": "FINISH"})
+    
     # Add state information to the last message
     state_info = f"""
     Current state:
@@ -143,14 +163,60 @@ def supervisor_node(state: State) -> Command[Literal["translator", "readability_
     else:
         state["messages"].append(HumanMessage(content=state_info))
     
+    print("\n" + "=" * 80)
+    print("🧠 SUPERVISOR AGENT: Deciding next step...")
+    print("-" * 80)
+    
+    # Check if document is already in the target language and we haven't processed it yet
+    document_content = state.get("document_content")
+    target_language = state.get("target_language")
+    translated_content = state.get("translated_content")
+    
+    if document_content and target_language and not translated_content:
+        # Simple language detection - this is a basic check
+        # For a real application, use a language detection library
+        system_prompt = f"""
+        You are a language detection specialist. Determine if the following text is in {target_language}.
+        Respond with only 'yes' or 'no'.
+        """
+        
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=document_content[:500])  # Use first 500 chars for detection
+        ]
+        
+        print(f"🔍 Checking if document is already in {target_language}...")
+        response = llm.invoke(messages)
+        is_target_language = 'yes' in response.content.lower()
+        
+        if is_target_language:
+            print(f"✅ Document is already in {target_language}, skipping translation")
+            # Update the state with the original document as the translated content
+            state["translated_content"] = document_content
+            state["messages"].append(AIMessage(
+                content=f"The document is already in {target_language}. Skipping translation and proceeding to readability assessment."
+            ))
+            # Return a command to go to readability testing with the updated state
+            return Command(goto="readability_tester", update={
+                "next": "readability_tester",
+                "translated_content": document_content  # Explicitly include in update
+            })
+    
     response = llm.with_structured_output(Router).invoke(state["messages"])
     goto = response["next"]
     reason = response["reason"]
+    
+    print(f"✅ DECISION: Call the {goto} agent")
+    print(f"📝 REASON: {reason}")
+    print("=" * 80)
     
     # Add the supervisor's decision to the messages
     state["messages"].append(AIMessage(content=f"I've decided to call the {goto} agent. Reason: {reason}"))
     
     if goto == "FINISH":
+        print("\n" + "=" * 80)
+        print("🎉 WORKFLOW COMPLETE: Translation process finished successfully")
+        print("=" * 80)
         state["messages"].append(AIMessage(content="Translation process completed successfully."))
         return Command(goto=END, update={"next": "FINISH"})
     
@@ -161,8 +227,14 @@ def translator_node(state: State) -> State:
     document_content = state.get("document_content")
     target_language = state.get("target_language")
     
+    print("\n" + "=" * 80)
+    print(f"🔤 TRANSLATOR AGENT: Translating document to {target_language}...")
+    print("-" * 80)
+    
     if not document_content or not target_language:
-        state["messages"].append(AIMessage(content="Error: Missing document content or target language."))
+        error_msg = "Error: Missing document content or target language."
+        print(f"❌ ERROR: {error_msg}")
+        state["messages"].append(AIMessage(content=error_msg))
         return state
     
     system_prompt = f"""
@@ -176,10 +248,16 @@ def translator_node(state: State) -> State:
         HumanMessage(content=document_content)
     ]
     
+    print(f"📝 Processing document ({len(document_content)} characters)...")
     response = llm.invoke(messages)
     translated_content = response.content
     
     state["translated_content"] = translated_content
+    preview = translated_content[:200] + "..." if len(translated_content) > 200 else translated_content
+    print(f"✅ TRANSLATION COMPLETE: Document translated to {target_language}")
+    print(f"📄 PREVIEW:\n{preview}")
+    print("=" * 80)
+    
     state["messages"].append(AIMessage(content=f"I've translated the document to {target_language}. Here's a preview:\n\n{translated_content[:200]}..."))
     
     return state
@@ -188,15 +266,26 @@ def readability_tester_node(state: State) -> State:
     """Readability tester agent that assesses the readability of the translation."""
     translated_content = state.get("translated_content")
     target_language = state.get("target_language")
+    previous_score = state.get("previous_readability_score")
+    
+    print("\n" + "=" * 80)
+    print(f"📊 READABILITY TESTER AGENT: Assessing {target_language} translation...")
+    print("-" * 80)
     
     if not translated_content or not target_language:
-        state["messages"].append(AIMessage(content="Error: Missing translated content or target language."))
+        error_msg = "Error: Missing translated content or target language."
+        print(f"❌ ERROR: {error_msg}")
+        state["messages"].append(AIMessage(content=error_msg))
         return state
+    
+    # Check if we're coming from a revision
+    coming_from_revision = state.get("next") == "readability_tester" and previous_score is None and state.get("readability_score") is None
     
     system_prompt = f"""
     {READABILITY_TESTER_PROMPT}
     
     Assess the readability of the following {target_language} text.
+    IMPORTANT: Your response MUST include a numerical score in the format 'X/10' or 'Score: X' where X is a number between 1 and 10.
     """
     
     messages = [
@@ -204,6 +293,7 @@ def readability_tester_node(state: State) -> State:
         HumanMessage(content=translated_content)
     ]
     
+    print("📝 Analyzing readability...")
     response = llm.invoke(messages)
     feedback = response.content
     
@@ -218,25 +308,70 @@ def readability_tester_node(state: State) -> State:
         if score_match:
             readability_score = float(score_match.group(1))
         else:
-            # Default to a moderate score if we can't extract one
-            readability_score = 5.0
+            # Raise an error instead of using a default score
+            error_msg = "Error: Could not extract a readability score from the assessment."
+            print(f"❌ {error_msg}")
+            print(f"Raw feedback: {feedback[:200]}...")
+            raise ValueError(error_msg)
+    
+    # Validate the score is within the expected range
+    if readability_score < 1 or readability_score > 10:
+        error_msg = f"Error: Readability score {readability_score} is outside the valid range (1-10)."
+        print(f"❌ {error_msg}")
+        raise ValueError(error_msg)
+    
+    # Store the previous score before updating if we're coming from a revision
+    if coming_from_revision and state.get("readability_score") is not None:
+        state["previous_readability_score"] = state["readability_score"]
     
     state["readability_score"] = readability_score
     state["revision_needed"] = readability_score < 7.0
     
-    state["messages"].append(AIMessage(content=f"I've assessed the readability of the translation. Score: {readability_score}/10\n\nFeedback: {feedback}"))
+    print(f"✅ ASSESSMENT COMPLETE: Readability score = {readability_score}/10")
+    print(f"📝 FEEDBACK:\n{feedback[:300]}{'...' if len(feedback) > 300 else ''}")
+    
+    # Add information about improvement if we're coming from a revision
+    if coming_from_revision and state.get("previous_readability_score") is not None:
+        previous_score = state["previous_readability_score"]
+        improvement = readability_score - previous_score
+        print(f"📈 IMPROVEMENT: Score increased by {improvement:.1f} points (from {previous_score:.1f} to {readability_score:.1f})")
+    
+    if state["revision_needed"]:
+        print(f"⚠️ REVISION NEEDED: Score below threshold of 7.0")
+    else:
+        print(f"✅ NO REVISION NEEDED: Score meets or exceeds threshold of 7.0")
+    print("=" * 80)
+    
+    # Create a more detailed message if we're coming from a revision
+    if coming_from_revision:
+        message_content = f"I've assessed the readability of the revised translation. Score: {readability_score}/10\n\nFeedback: {feedback}"
+        if state.get("previous_readability_score") is not None:
+            previous_score = state["previous_readability_score"]
+            improvement = readability_score - previous_score
+            message_content += f"\n\nThe revision has improved the readability score by {improvement:.1f} points (from {previous_score:.1f} to {readability_score:.1f})."
+    else:
+        message_content = f"I've assessed the readability of the translation. Score: {readability_score}/10\n\nFeedback: {feedback}"
+    
+    state["messages"].append(AIMessage(content=message_content))
     
     return state
 
-def reviser_node(state: State) -> State:
+def reviser_node(state: State) -> Command[Literal["readability_tester"]]:
     """Reviser agent that improves the translation based on readability feedback."""
     translated_content = state.get("translated_content")
     target_language = state.get("target_language")
     readability_score = state.get("readability_score")
     
+    print("\n" + "=" * 80)
+    print(f"✏️ REVISER AGENT: Improving {target_language} translation...")
+    print("-" * 80)
+    
     if not translated_content or not target_language or readability_score is None:
-        state["messages"].append(AIMessage(content="Error: Missing translated content, target language, or readability score."))
-        return state
+        error_msg = "Error: Missing translated content, target language, or readability score."
+        print(f"❌ ERROR: {error_msg}")
+        state["messages"].append(AIMessage(content=error_msg))
+        # Return to supervisor to handle the error
+        return Command(goto="supervisor", update={"next": "supervisor"})
     
     # Get the last message which should contain the readability feedback
     feedback = ""
@@ -244,6 +379,9 @@ def reviser_node(state: State) -> State:
         if "I've assessed the readability" in message.content:
             feedback = message.content
             break
+    
+    print(f"📝 Current readability score: {readability_score}/10")
+    print("📝 Revising translation to improve readability...")
     
     system_prompt = f"""
     {REVISER_PROMPT}
@@ -263,10 +401,30 @@ def reviser_node(state: State) -> State:
     response = llm.invoke(messages)
     revised_content = response.content
     
+    # Update the state with the revised content
     state["translated_content"] = revised_content
-    state["messages"].append(AIMessage(content=f"I've revised the translation to improve readability. Here's a preview:\n\n{revised_content[:200]}..."))
+    # Store the current score as previous_readability_score before resetting
+    state["previous_readability_score"] = readability_score
+    # Reset the readability score to force reassessment
+    state["readability_score"] = None
+    state["revision_needed"] = None
     
-    return state
+    preview = revised_content[:200] + "..." if len(revised_content) > 200 else revised_content
+    print(f"✅ REVISION COMPLETE: Translation revised for better readability")
+    print(f"📄 PREVIEW:\n{preview}")
+    print("🔄 Sending revised content for readability assessment")
+    print("=" * 80)
+    
+    state["messages"].append(AIMessage(content=f"I've revised the translation to improve readability. Here's a preview:\n\n{revised_content[:200]}...\n\nNow we need to reassess the readability of the revised content."))
+    
+    # Directly go to readability testing with the revised content
+    return Command(goto="readability_tester", update={
+        "next": "readability_tester",
+        "translated_content": revised_content,
+        "previous_readability_score": readability_score,  # Store the previous score
+        "readability_score": None,  # Reset score to force reassessment
+        "revision_needed": None
+    })
 
 # Create the workflow graph
 def create_translation_graph():
@@ -283,29 +441,40 @@ def create_translation_graph():
     workflow.add_edge(START, "supervisor")
     workflow.add_edge("translator", "supervisor")
     workflow.add_edge("readability_tester", "supervisor")
-    workflow.add_edge("reviser", "supervisor")
+    workflow.add_edge("reviser", "readability_tester")  # Reviser goes directly to readability testing
     
     # Compile the graph
     return workflow.compile()
 
 def save_translation(translation_data: Dict, output_file: str) -> None:
     """Save the translation to a file."""
-    with open(output_file, 'w', encoding='utf-8') as f:
-        f.write(translation_data["translated_content"])
-    
-    # Save metadata to a JSON file
-    metadata_file = f"{os.path.splitext(output_file)[0]}_metadata.json"
-    metadata = {
-        "target_language": translation_data["target_language"],
-        "readability_score": translation_data["readability_score"],
-        "revisions_made": translation_data["revision_needed"],
-    }
-    
-    with open(metadata_file, 'w', encoding='utf-8') as f:
-        json.dump(metadata, f, indent=2)
-    
-    print(f"Translation saved to: {output_file}")
-    print(f"Metadata saved to: {metadata_file}")
+    try:
+        # Ensure we have the necessary keys with defaults if missing
+        translated_content = translation_data.get("translated_content", "")
+        target_language = translation_data.get("target_language", "Unknown")
+        readability_score = translation_data.get("readability_score", 0)
+        revisions_made = translation_data.get("revisions_made", False)
+        
+        # Write the translation content to the output file
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(translated_content)
+        
+        # Save metadata to a JSON file
+        import json
+        metadata_file = f"{os.path.splitext(output_file)[0]}_metadata.json"
+        metadata = {
+            "target_language": target_language,
+            "readability_score": readability_score,
+            "revisions_made": revisions_made,
+        }
+        
+        with open(metadata_file, 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, indent=2)
+        
+        print(f"Translation saved to: {output_file}")
+        print(f"Metadata saved to: {metadata_file}")
+    except Exception as e:
+        print(f"\nWarning: Could not save translation completely: {str(e)}")
 
 def run_interactive_translation():
     """Run the translation workflow interactively."""
@@ -395,19 +564,26 @@ def run_batch_translation(input_file: str, target_language: str, output_file: Op
     # Create the workflow graph
     translation_graph = create_translation_graph()
     
+    print("\n" + "=" * 80)
+    print(f"🚀 STARTING TRANSLATION WORKFLOW")
+    print(f"📄 Input file: {input_file}")
+    print(f"🌐 Target language: {target_language}")
+    if output_file:
+        print(f"📝 Output file: {output_file}")
+    print("=" * 80)
+    
     # Set default output file if not provided
     if not output_file:
         base_name = os.path.splitext(input_file)[0]
         output_file = f"{base_name}_{target_language}.txt"
     
-    print(f"Translating '{input_file}' to {target_language}...")
-    
     # Load document content
     try:
         with open(input_file, 'r', encoding='utf-8') as file:
             document_content = file.read()
+            print(f"✅ Document loaded: {len(document_content)} characters")
     except FileNotFoundError:
-        print(f"Error: File '{input_file}' not found.")
+        print(f"❌ ERROR: File '{input_file}' not found.")
         return
     
     # Initial state
@@ -417,36 +593,92 @@ def run_batch_translation(input_file: str, target_language: str, output_file: Op
         "target_language": target_language
     }
     
-    # Run the workflow
-    print("Running the translation workflow...")
+    # Set up logging to capture terminal output
+    log_date = datetime.datetime.now().strftime("%Y_%m_%d")
+    log_filename = f"{os.path.splitext(os.path.basename(input_file))[0]}_{target_language}_{log_date}.txt"
+    log_path = os.path.join(os.path.dirname(os.path.abspath(input_file)), log_filename)
     
-    # Stream the results for visibility
-    for step in translation_graph.stream(state):
-        # If there's a new message, print it
-        if "messages" in step and step["messages"] and isinstance(step["messages"][-1], AIMessage):
-            # Split the content and get the first line
-            content_lines = step['messages'][-1].content.split('\n')
-            first_line = content_lines[0] if content_lines else ""
-            print(f"- {first_line}")
-    
-    # Get the final state
-    final_state = translation_graph.invoke(state)
-    
-    # Check if we have a translation
-    if final_state.get("translated_content"):
-        # Save the translation
-        save_translation({
-            "target_language": final_state["target_language"],
-            "translated_content": final_state["translated_content"],
-            "readability_score": final_state["readability_score"],
-            "revision_needed": final_state["revision_needed"],
-        }, output_file)
+    # Create a custom stdout that writes to both console and log
+    class TeeOutput:
+        def __init__(self, file):
+            self.file = file
+            self.terminal = sys.stdout
+            self.log = []
         
-        print(f"Readability score: {final_state['readability_score']}/10")
-        if final_state.get("revision_needed"):
-            print("Note: The translation was revised to improve readability.")
-    else:
-        print("Translation process failed. Please try again.")
+        def write(self, message):
+            self.terminal.write(message)
+            self.log.append(message)
+        
+        def flush(self):
+            self.terminal.flush()
+    
+    # Save the original stdout
+    original_stdout = sys.stdout
+    # Create our custom output handler
+    tee_output = TeeOutput(log_path)
+    
+    try:
+        # Redirect stdout to our tee output
+        sys.stdout = tee_output
+        
+        print(f"\nLog file will be saved to: {log_path}\n")
+        
+        # Run the workflow - we don't need to print anything here as the agent nodes will handle output
+        # Set a recursion limit to prevent infinite loops
+        result = translation_graph.invoke(state, config={"recursion_limit": 10})
+        
+        # Check if we have a translation
+        if result.get("translated_content"):
+            # Determine if revisions were made
+            revisions_made = False
+            if result.get("previous_readability_score") is not None:
+                revisions_made = True
+            
+            # Prepare the translation data with safe access to dictionary keys
+            translation_data = {
+                "target_language": result.get("target_language", target_language),
+                "translated_content": result.get("translated_content", ""),
+                "readability_score": result.get("readability_score", 0),
+                "revisions_made": revisions_made
+            }
+            
+            # Save the translation
+            save_translation(translation_data, output_file)
+            
+            print("\n" + "=" * 80)
+            print("📊 FINAL RESULTS:")
+            print(f"✅ Translation saved to: {output_file}")
+            try:
+                if "readability_score" in result:
+                    print(f"📊 Readability score: {result['readability_score']}/10")
+                    if result.get("previous_readability_score") is not None:
+                        print(f"🔄 Note: The translation was revised to improve readability (from {result.get('previous_readability_score', 0)}/10 to {result['readability_score']}/10).")
+                else:
+                    print("⚠️ Note: Readability assessment was not completed.")
+            except Exception as e:
+                print(f"⚠️ Note: Could not display complete readability information: {str(e)}")
+            print("=" * 80)
+        else:
+            print("\n" + "=" * 80)
+            print("❌ TRANSLATION FAILED: No translated content available.")
+            print("=" * 80)
+    except ValueError as e:
+        print("\n" + "=" * 80)
+        print(f"❌ TRANSLATION ERROR: {str(e)}")
+        print("=" * 80)
+    except Exception as e:
+        print("\n" + "=" * 80)
+        print(f"❌ UNEXPECTED ERROR: {str(e)}")
+        print("=" * 80)
+    finally:
+        # Restore the original stdout
+        sys.stdout = original_stdout
+        
+        # Save the captured output to the log file
+        with open(log_path, 'w', encoding='utf-8') as log_file:
+            log_file.write(''.join(tee_output.log))
+        
+        print(f"\nLog saved to: {log_path}")
 
 def main():
     """Main function to parse arguments and run the appropriate mode."""

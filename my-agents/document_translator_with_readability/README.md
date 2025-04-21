@@ -103,10 +103,6 @@ A document translation system that translates English documents to any language 
 6. **Dynamic Workflow**: The supervisor makes decisions based on each agent's output
 7. **Final Output**: Delivers a high-quality, readable translation with detailed feedback
 
-### Workflow Diagram
-
-
-
 ## Requirements
 
 - Python 3.8+
@@ -169,7 +165,9 @@ Follow the interactive prompts to:
 2. Specify the target language
 3. Review the translation and readability assessment
 
-## Example
+## Examples
+
+### Example 1: Translation to Another Language
 
 ```
 Assistant: Please provide the document content or a path to a text file.
@@ -182,7 +180,7 @@ Assistant: Document loaded successfully. Content preview:
 
 Artificial Intelligence (AI) represents one of the most significant technological advancements of the modern era. It encompasses a broad range of computation...
 
-Please specify the target language for translation.
+Assistant: Please specify the target language for translation.
 
 You: French
 
@@ -194,7 +192,7 @@ Assistant: Translation completed. Preview:
 
 L'Intelligence Artificielle (IA) représente l'une des avancées technologiques les plus significatives de l'ère moderne. Elle englobe un large éventail de ...
 
-Now testing readability...
+Assistant: Now testing readability...
 
 Assistant: Readability assessment:
 
@@ -203,39 +201,131 @@ ASSESSMENT: The text is highly informative and well-structured, making it easy t
 
 The readability score is 8.0/10, which meets our standards. Translation is complete!
 
-Do you want to save the translation? (y/n): y
+Assistant: Metadata saved to: french_ai_intro_metadata.json
 
-Enter output filename: french_ai_intro.txt
-
-Translation saved to: french_ai_intro.txt
-Metadata saved to: french_ai_intro_metadata.json
-
-Translation process completed!
+Assistant: Translation process completed!
 ```
 
-### Revision Example
+### Example 2: Improving Readability of English Text
 
-If the readability score is below 7/10, the system will automatically revise the translation:
+The system can also be used to improve the readability of text that's already in the target language. This is useful for simplifying complex or poorly written content.
+
+```bash
+python agent_translator.py --input poor_sample.txt --language English
+```
+
+Output:
 
 ```
-Assistant: Readability assessment:
+================================================================================
+🚀 STARTING TRANSLATION WORKFLOW
+📄 Input file: poor_sample.txt
+🌐 Target language: English
+================================================================================
+✅ Document loaded: 3773 characters
 
-SCORE: 5.5
-ASSESSMENT: The translation uses complex sentence structures and specialized terminology that may be difficult for general readers to understand. Some sentences are quite long, which affects the flow and clarity of the text.
+Log file will be saved to: poor_sample_English_2025_04_21.txt
 
-The readability score is 5.5/10, which is below our threshold of 7/10. Revising the translation for better readability...
+================================================================================
+🧠 SUPERVISOR AGENT: Deciding next step...
+--------------------------------------------------------------------------------
+🔍 Checking if document is already in English...
+✅ Document is already in English, skipping translation
 
-Assistant: Translation revised for better readability. Preview:
+================================================================================
+📊 READABILITY TESTER AGENT: Assessing English translation...
+--------------------------------------------------------------------------------
+📝 Analyzing readability...
+✅ ASSESSMENT COMPLETE: Readability score = 5.0/10
+📝 FEEDBACK:
+Score: 5/10
 
-# Introduction à l'Intelligence Artificielle
+**Assessment:**
+The text is dense and uses highly complex, academic language that reduces clarity.
+⚠️ REVISION NEEDED: Score below threshold of 7.0
 
-L'Intelligence Artificielle (IA) est l'une des avancées technologiques les plus importantes de notre époque. Elle regroupe diverses techniques informatiques...
+================================================================================
+🧠 SUPERVISOR AGENT: Deciding next step...
+--------------------------------------------------------------------------------
+✅ DECISION: Call the reviser agent
+📝 REASON: The document is already in English, has a readability score of 5.0, and revision is needed to improve readability.
 
-Testing readability of revised translation...
+================================================================================
+✏️ REVISER AGENT: Improving English translation...
+--------------------------------------------------------------------------------
+📝 Current readability score: 5.0/10
+📝 Revising translation to improve readability...
+✅ REVISION COMPLETE: Translation revised for better readability
 
-Assistant: Readability assessment:
+================================================================================
+📊 READABILITY TESTER AGENT: Assessing English translation...
+--------------------------------------------------------------------------------
+📝 Analyzing readability...
+✅ ASSESSMENT COMPLETE: Readability score = 9.0/10
+📝 FEEDBACK:
+Score: 9/10
+✅ NO REVISION NEEDED: Score meets or exceeds threshold of 7.0
 
-SCORE: 8.5
-ASSESSMENT: The revised translation is much more accessible. Sentences are shorter and clearer, specialized terms are explained well, and the overall flow is improved.
+================================================================================
+🧠 SUPERVISOR AGENT: Deciding next step...
+--------------------------------------------------------------------------------
+✅ DECISION: Call the FINISH agent
+📝 REASON: The document is in English, has a high readability score (9.0), and no further revision is needed.
 
-The readability score is 8.5/10, which meets our standards. Translation is complete!
+================================================================================
+🎉 WORKFLOW COMPLETE: Translation process finished successfully
+================================================================================
+Translation saved to: poor_sample_English.txt
+Metadata saved to: poor_sample_English_metadata.json
+
+================================================================================
+📊 FINAL RESULTS:
+✅ Translation saved to: poor_sample_English.txt
+📊 Readability score: 9.0/10
+🔄 Note: The translation was revised to improve readability (from 5.0/10 to 9.0/10).
+================================================================================
+
+Log saved to: poor_sample_English_2025_04_21.txt
+```
+
+## Output Files
+
+The translator generates several output files:
+
+1. **Translation File**: Contains the translated or revised content
+   - Example: `poor_sample_English.txt`
+
+2. **Metadata File**: JSON file with information about the translation
+   - Example: `poor_sample_English_metadata.json`
+   - Contains:
+     - Target language
+     - Readability score
+     - Whether revisions were made
+
+   ```json
+   {
+     "target_language": "English",
+     "readability_score": 9.0,
+     "revisions_made": true
+   }
+   ```
+
+3. **Log File**: Detailed log of the entire translation process
+   - Example: `poor_sample_English_2025_04_21.txt`
+   - Naming format: `{input_file}_{language}_{yyyy_mm_dd}.txt`
+   - Contains all terminal output including:
+     - Agent decisions and reasoning
+     - Readability assessments
+     - Revision details
+     - Error messages (if any)
+
+## Sample Files
+
+The repository includes these sample files:
+
+1. **sample.txt**: A well-written sample document for testing translations
+
+2. **poor_sample.txt**: A poorly written English document with low readability
+   - Use this to test the readability improvement feature
+   - Run with: `python agent_translator.py --input poor_sample.txt --language English`
+   - The system will detect it's already in English and focus on improving readability

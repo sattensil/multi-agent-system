@@ -149,7 +149,7 @@ class DocumentTranslator:
             self.current_state = TranslationState.COMPLETED
             return "No revision needed. The translation has good readability."
         
-        llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.3)
+        llm = ChatOpenAI(model="gpt-4.1", temperature=0.3)
         
         system_prompt = f"""
         You are a professional translator and editor for {self.target_language}.
