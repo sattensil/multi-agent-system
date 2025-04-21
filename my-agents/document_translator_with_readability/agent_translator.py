@@ -299,20 +299,15 @@ def readability_tester_node(state: State) -> State:
     
     # Extract the readability score from the feedback
     import re
-    score_match = re.search(r'(\d+(\.\d+)?)/10', feedback)
+    score_match = re.search(r"Score:\s*(\d+(?:\.\d+)?)\/10", feedback, re.IGNORECASE)
+    
     if score_match:
         readability_score = float(score_match.group(1))
     else:
-        # If no score is found, try to extract just a number
-        score_match = re.search(r'(?:score|rating|grade):\s*(\d+(\.\d+)?)', feedback.lower())
-        if score_match:
-            readability_score = float(score_match.group(1))
-        else:
-            # Raise an error instead of using a default score
-            error_msg = "Error: Could not extract a readability score from the assessment."
-            print(f"❌ {error_msg}")
-            print(f"Raw feedback: {feedback[:200]}...")
-            raise ValueError(error_msg)
+        # Raise an error instead of using a default score
+        error_msg = "Error: Could not extract a readability score from the assessment."
+        print(f"❌ {error_msg}")
+        raise ValueError(error_msg)
     
     # Validate the score is within the expected range
     if readability_score < 1 or readability_score > 10:
@@ -328,7 +323,7 @@ def readability_tester_node(state: State) -> State:
     state["revision_needed"] = readability_score < 7.0
     
     print(f"✅ ASSESSMENT COMPLETE: Readability score = {readability_score}/10")
-    print(f"📝 FEEDBACK:\n{feedback[:300]}{'...' if len(feedback) > 300 else ''}")
+    print(f"📝 FEEDBACK:\n{feedback}")
     
     # Add information about improvement if we're coming from a revision
     if coming_from_revision and state.get("previous_readability_score") is not None:
