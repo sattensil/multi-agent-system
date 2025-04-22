@@ -1,36 +1,31 @@
 # Document Translator with Readability Testing
 
-A document translation system that translates English documents to any language and ensures high readability in the target language. This project offers two implementations: a simple state-based translator and an advanced multi-agent architecture.
-### Common Features
+A multi-agent document translation system that translates documents between languages while ensuring high readability in the target language. This project offers multiple implementations with different model providers and architectures.
+## Available Implementations
 
-- **Document Loading**: Load text from files or direct input
-- **Language Selection**: Translate to any target language
-- **Professional Translation**: Uses advanced LLMs for high-quality translation
-- **Readability Testing**: Analyzes the readability of translated content
-- **Automatic Revision**: Improves translations that don't meet readability standards
+| Implementation | File | Description | Models |
+|----------------|------|-------------|--------|
+| Simple Translator | `simple_translator.py` | State machine-based workflow with sequential processing | OpenAI |
+| Multi-Agent Translator | `agent_translator.py` | Supervisor-agent architecture with specialized agents | OpenAI |
+| Novita.ai Multi-Agent Translator | `novita_agent_translator.py` | Multi-agent architecture using open source models | Novita.ai |
 
-### Simple Translator (`simple_translator.py`)
+## Key Features
 
-- State machine-based workflow
-- Lightweight implementation
-- Sequential processing
+- **Multi-Agent Architecture**: Specialized agents for translation, readability assessment, and revision
+- **Readability Testing**: Analyzes and scores translations on a 1-10 scale
+- **Automatic Revision**: Improves translations with readability scores below 7/10
+- **Multiple Model Options**: Support for both OpenAI and Novita.ai open source models
+- **Batch & Interactive Modes**: Process files directly or through interactive prompts
+- **Detailed Logging**: Comprehensive logs of the translation process
 
-### Multi-Agent Translator (`agent_translator.py`)
+## Translation Workflow
 
-- **Supervisor-Agent Architecture**: Uses a supervisor to coordinate specialized agents
-- **Specialized Agents**: Separate agents for translation, readability testing, and revision
-- **Advanced Decision Making**: Dynamic workflow based on agent recommendations
-- **Detailed Feedback**: More comprehensive readability assessment
-- **LangGraph Integration**: Built on the LangGraph framework for agent orchestration
-
-### Simple Translator Workflow
-
-1. **Load Document**: The system accepts an English document (text file or direct input)
-2. **Select Target Language**: Specify which language to translate into
-3. **Translation**: The document is translated while preserving formatting and tone
-4. **Readability Testing**: An agent analyzes the translation's readability on a scale of 1-10
-5. **Revision (if needed)**: If readability score is below 7, the translation is revised
-6. **Final Output**: Delivers a high-quality, readable translation
+1. **Document Input**: Load text from a file or direct input
+2. **Language Selection**: Specify the target language
+3. **Translation**: Convert the document to the target language
+4. **Readability Assessment**: Score the translation's readability (1-10 scale)
+5. **Revision (if needed)**: Improve translations scoring below 7/10
+6. **Final Output**: Deliver the completed translation with metadata
 ### Workflow Diagrams
 
 #### Simple Translator Workflow
@@ -93,111 +88,115 @@ A document translation system that translates English documents to any language 
                           │                 │
                           └─────────────────┘
 ```
-### Multi-Agent Translator Workflow
+## Multi-Agent Architecture
 
-1. **Load Document & Language**: The system accepts an English document and target language
-2. **Supervisor Agent**: Coordinates the workflow and decides which agent to call next
-3. **Translator Agent**: Specialized agent for high-quality translation
-4. **Readability Tester Agent**: Dedicated agent for comprehensive readability assessment
-5. **Reviser Agent**: Specialized agent for improving translations with low readability
-6. **Dynamic Workflow**: The supervisor makes decisions based on each agent's output
-7. **Final Output**: Delivers a high-quality, readable translation with detailed feedback
+| Agent | Role | OpenAI Model | Novita.ai Model |
+|-------|------|--------------|----------------|
+| **Supervisor** | Coordinates workflow and decides next steps | GPT-4 | Mistral 7B |
+| **Translator** | Performs high-quality translation | GPT-4 | Llama 3 70B |
+| **Readability Tester** | Assesses translation quality on a 1-10 scale | GPT-4 | Mistral 7B |
+| **Reviser** | Improves translations with low readability | GPT-4 | Qwen 2.5 7B |
 
 ## Requirements
 
 - Python 3.8+
-- OpenAI API key (for GPT models)
+- API keys (based on implementation choice)
 
 ## Installation
 
 1. Clone the repository
 2. Install dependencies:
-   ```
+   ```bash
    pip install -r requirements.txt
    ```
 3. Create a `.env` file with your API keys:
    ```
+   # For OpenAI implementations
    OPENAI_API_KEY=your_openai_api_key
+   
+   # For Novita.ai implementation
+   NOVITA_API_KEY=your_novita_api_key
    ```
 
 ## Usage
 
-### Simple Translator
-
-#### Interactive Mode
-
-Run the simple translator interactively with:
+### OpenAI Implementations
 
 ```bash
+# Simple Translator (Interactive)
 python simple_translator.py
-```
 
-#### Batch Mode
+# Simple Translator (Batch)
+python simple_translator.py --input sample.txt --language Spanish
 
-Translate a file directly with:
-
-```bash
-python simple_translator.py --input sample.txt --language Spanish --output translated.txt
-```
-
-### Multi-Agent Translator
-
-The multi-agent translator uses a supervisor-agent architecture for more sophisticated translation workflow.
-
-#### Interactive Mode
-
-Run the multi-agent translator interactively with:
-
-```bash
+# Multi-Agent Translator (Interactive)
 python agent_translator.py
+
+# Multi-Agent Translator (Batch)
+python agent_translator.py --input sample.txt --language Spanish
 ```
 
-#### Batch Mode
-
-Translate a file directly with:
+### Novita.ai Implementation
 
 ```bash
-python agent_translator.py --input sample.txt --language Spanish --output translated.txt
+# Novita.ai Multi-Agent Translator (Interactive)
+python novita_agent_translator.py
+
+# Novita.ai Multi-Agent Translator (Batch)
+python novita_agent_translator.py --input sample.txt --language Spanish
 ```
 
-Follow the interactive prompts to:
-1. Provide your document (file path or paste content)
-2. Specify the target language
-3. Review the translation and readability assessment
+## Output Files
 
-## Examples
+All implementations generate the following output files:
 
-### Example 1: Translation to Another Language
+- `{input_filename}_{target_language}.txt` - The translated document
+- `{input_filename}_{target_language}_metadata.json` - Metadata including readability scores
+- `{input_filename}_{target_language}_{date}.txt` - Detailed log of the translation process
+
+## Novita.ai Integration
+
+The `novita_agent_translator.py` implementation uses open source models from Novita.ai:
+
+### Features
+
+- **Open Source Models**: Uses Llama 3, Mistral, and Qwen models via Novita.ai's API
+- **Model Specialization**: Each agent uses a model optimized for its specific task
+- **Robust Error Handling**: Improved readability assessment and loop prevention
+- **Detailed Logging**: Shows which model is handling each part of the workflow
+
+### Configuration
+
+The Novita.ai implementation requires a valid Novita.ai API key in your `.env` file:
 
 ```
-Assistant: Please provide the document content or a path to a text file.
+NOVITA_API_KEY=your_novita_api_key
+```
 
-You: sample.txt
+### Example Output
 
-Assistant: Document loaded successfully. Content preview:
+```
+================================================================================
+🧠 SUPERVISOR AGENT (MISTRAL-7B-INSTRUCT): Deciding next step...
+--------------------------------------------------------------------------------
+✅ LOGICAL DECISION: Call the translator agent
+📝 REASON: We have document content and target language but no translation yet.
+================================================================================
 
-# Introduction to Artificial Intelligence
+================================================================================
+🐤 TRANSLATOR AGENT (LLAMA-3-70B-INSTRUCT): Translating document to Spanish...
+--------------------------------------------------------------------------------
+📝 Processing document (2712 characters)...
+✅ TRANSLATION COMPLETE: Document translated to Spanish
+================================================================================
 
-Artificial Intelligence (AI) represents one of the most significant technological advancements of the modern era. It encompasses a broad range of computation...
-
-Assistant: Please specify the target language for translation.
-
-You: French
-
-Assistant: Target language set to: French. Starting translation process...
-
-Assistant: Translation completed. Preview:
-
-# Introduction à l'Intelligence Artificielle
-
-L'Intelligence Artificielle (IA) représente l'une des avancées technologiques les plus significatives de l'ère moderne. Elle englobe un large éventail de ...
-
-Assistant: Now testing readability...
-
-Assistant: Readability assessment:
-
-SCORE: 8
-ASSESSMENT: The text is highly informative and well-structured, making it easy to follow. The sentences are of moderate length and complexity, with a good balance between common and specialized vocabulary. The flow of ideas is coherent, and the transitions between sections are smooth.
+================================================================================
+📊 READABILITY TESTER AGENT (MISTRAL-7B-INSTRUCT): Assessing Spanish translation...
+--------------------------------------------------------------------------------
+📝 Analyzing readability...
+✅ ASSESSMENT COMPLETE: Readability score = 8.0/10
+================================================================================
+```
 
 The readability score is 8.0/10, which meets our standards. Translation is complete!
 
