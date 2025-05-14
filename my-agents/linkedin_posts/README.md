@@ -18,10 +18,6 @@ This system uses a workflow of specialized AI agents to:
 - Python 3.9+
 - OpenAI API key (set in your `.env` file)
 - News API key (recommended for reliable news sources, get one at https://newsapi.org/register)
-- For automated scheduling (optional):
-  - Hootsuite account and API key, OR
-  - Later/Latermedia account and API key, OR
-  - LinkedIn Developer account with API access
 
 ## Installation
 
