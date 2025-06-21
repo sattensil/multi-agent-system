@@ -32,19 +32,22 @@ La Inteligencia Artificial (IA) representa uno de los avances tecnológicos más
 📊 READABILITY TESTER AGENT (MISTRAL-7B-INSTRUCT): Assessing Spanish translation...
 --------------------------------------------------------------------------------
 📝 Analyzing readability...
-✅ ASSESSMENT COMPLETE: Readability score = 8.0/10
+✅ ASSESSMENT COMPLETE: Readability score = 7.0/10
 📝 FEEDBACK:
-Score: 8/10
+Score: 7/10
 
-1. Clarity: The text is generally easy to understand, with the exception of a few technical terms that may require some prior knowledge.
-2. Fluency: The text flows naturally in Spanish, with a few minor grammatical errors.
-3. Appropriateness: The vocabulary and style are appropriate for the content, with a formal tone that is suitable for an academic article.
-4. Consistency: Terminology is used consistently throughout the text.
-5. Cultural adaptation: The text does not contain any cultural references, so it is not possible to evaluate this aspect.
+The text provides a clear and concise introduction to Artificial Intelligence (AI), its historical development, and modern approaches. However, it could benefit from simplifying some of the language to make it more accessible to a general audience.
 
-Overall, the readability of the text is good, with minor issues that can be easily corrected. The text provides a clear and concise overview of the topic, and the use of technical terms is appropriate for the audience. The text could be improved by correcting the minor grammatical errors and providing definitions for technical terms that may be unfamiliar to some readers.
+Here are some specific areas for improvement:
 
-Score: 8/10
+1. Clarity: The text uses some technical terms like "conceptual foundations" and "subconjunctive" that could be replaced with simpler language to improve readability.
+2. Fluency: The text is generally well-written, but the sentence "Estos avances han sido facilitados por tres factores clave" could be rephrased for better fluency, such as "These advances have been facilitated by three key factors."
+3. Vocabulary Level: The text uses some academic language like "conceptual foundations" and "subconjunctive" that could be replaced with simpler language to improve readability.
+4. Sentence Structure: The text uses some complex sentences, such as "La investigación temprana en IA se caracterizó por el optimismo y se centró principalmente en sistemas basados en reglas que podían resolver problemas bien definidos." This sentence could be rephrased for better clarity and readability, such as "Early research in AI was characterized by optimism and focused mainly on rule-based systems that could solve well-defined problems."
+5. Consistency: The text uses "IA" and "Inteligencia Artificial" interchangeably, which could be standardized to improve consistency.
+6. Accessibility: While the text is generally clear, it could benefit from simplifying some of the language to make it more accessible to a general audience.
+
+Overall, the text is generally clear and easy to understand, but could benefit from some simplification to improve readability and accessibility. A score of 7/10 is given for good readability with room for improvement.
 ✅ NO REVISION NEEDED: Score meets or exceeds threshold of 7.0
 ================================================================================
 
@@ -52,7 +55,7 @@ Score: 8/10
 🧠 SUPERVISOR AGENT (MISTRAL-7B-INSTRUCT): Deciding next step...
 --------------------------------------------------------------------------------
 ✅ LOGICAL DECISION: Call the FINISH agent
-📝 REASON: The translation has good readability with a score of 8.0/10, which meets or exceeds the threshold of 7.0.
+📝 REASON: The translation has good readability with a score of 7.0/10, which meets or exceeds the threshold of 7.0.
 ================================================================================
 Translation saved to: sample_Spanish.txt
 Metadata saved to: sample_Spanish_metadata.json
@@ -60,5 +63,5 @@ Metadata saved to: sample_Spanish_metadata.json
 ================================================================================
 📊 FINAL RESULTS:
 ✅ Translation saved to: sample_Spanish.txt
-📊 Readability score: 8.0/10
+📊 Readability score: 7.0/10
 ================================================================================
