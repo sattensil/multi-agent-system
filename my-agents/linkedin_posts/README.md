@@ -18,10 +18,6 @@ This system uses a workflow of specialized AI agents to:
 - Python 3.9+
 - OpenAI API key (set in your `.env` file)
 - News API key (recommended for reliable news sources, get one at https://newsapi.org/register)
-- For automated scheduling (optional):
-  - Hootsuite account and API key, OR
-  - Later/Latermedia account and API key, OR
-  - LinkedIn Developer account with API access
 
 ## Installation
 
@@ -96,64 +92,3 @@ You can create your own personas in two ways:
 1. **Through the CLI**: Select "Create and save new persona" when prompted
 2. **Manually**: Create a text file in the `personas` directory with a descriptive name (e.g., `industry_expert.txt`) containing your persona description
 
-## Scheduling Options
-
-This system supports multiple ways to schedule your LinkedIn posts:
-
-### 1. Manual Scheduling
-
-The default option that requires no API keys:
-- Copy the generated posts and paste them into LinkedIn's post creation interface
-- Use LinkedIn's built-in scheduling feature to set the posting time
-
-### 2. Hootsuite Integration
-
-For automated scheduling via [Hootsuite](https://hootsuite.com):
-1. Sign up for Hootsuite and connect your LinkedIn profile
-2. Get a Hootsuite API key from their developer portal (requires paid plan)
-3. Add the token to your `.env` file as `HOOTSUITE_ACCESS_TOKEN`
-
-### 3. Later/Latermedia Integration
-
-For automated scheduling via [Later](https://later.com):
-1. Sign up for Later and connect your LinkedIn profile
-2. Get a Later API key from their developer portal
-3. Add the key to your `.env` file as `LATER_API_KEY`
-
-### 4. LinkedIn Direct Integration
-
-For posting directly to LinkedIn (no scheduling):
-1. Create a LinkedIn Developer application
-2. Request the necessary permissions for posting content
-3. Generate an access token with the required scopes
-4. Add the token to your `.env` file as `LINKEDIN_ACCESS_TOKEN`
-
-Note: LinkedIn's API doesn't support scheduling, so posts will be published immediately
-
-## Structure
-
-- `main.py`: Entry point and user interface
-- `manager.py`: Orchestrates the multi-agent workflow
-- `buffer_integration.py`: Handles integrations with social media platforms (despite the filename, now supports multiple platforms)
-
-## Extending
-
-You can extend this system by:
-- Adding support for other social media platforms
-- Implementing custom news sources
-- Creating specialized agents for different content types
-- Enhancing the scheduling logic
-
-## GitHub Integration
-
-This project includes a `.gitignore` file that excludes:
-
-- Environment variables (`.env` file with API keys)
-- Generated posts directory
-- Custom persona files (except examples)
-
-This ensures that sensitive information and personal content aren't accidentally pushed to public repositories.
-
-## License
-
-This project is part of the multi-agent-system framework.
