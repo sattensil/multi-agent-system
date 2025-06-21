@@ -8,6 +8,9 @@ my-agents/linkedin_posts/generated_posts/
 my-agents/linkedin_posts/personas/*
 !my-agents/linkedin_posts/personas/examples/
 
+# OpenAI agents
+openai-agents-python/
+
 # Python cache files
 __pycache__/
 *.py[cod]
